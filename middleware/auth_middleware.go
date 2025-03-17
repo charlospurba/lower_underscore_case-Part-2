@@ -31,7 +31,6 @@ func AuthMiddleware(authService services.AuthService) gin.HandlerFunc {
 			return
 		}
 
-		// Simpan user dalam context
 		c.Set("user", user)
 		c.Next()
 	}
