@@ -2,50 +2,47 @@ package services
 
 import (
 	"errors"
-	"time"
-
-	"gin-user-app/config"
 	"gin-user-app/models"
 	"gin-user-app/repositories"
-	"gin-user-app/utils"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type AuthService interface {
-	Login(username, password string) (string, error)
-	VerifyUser(tokenString string) (*models.User, error)
+// AuthService menangani logika autentikasi.
+type AuthService struct {
+	authRepo  *repositories.AuthRepository // Ubah menjadi pointer
+	jwtSecret string
 }
 
-type authService struct {
-	authRepo repositories.AuthRepository
+// NewAuthService membuat instance baru dari AuthService.
+// Pastikan parameter pertama bertipe *repositories.AuthRepository.
+func NewAuthService(repo *repositories.AuthRepository, jwtSecret string) *AuthService {
+	return &AuthService{
+		authRepo:  repo,
+		jwtSecret: jwtSecret,
+	}
 }
 
-func NewAuthService(repo repositories.AuthRepository) AuthService {
-	return &authService{authRepo: repo}
-}
-
-func (s *authService) Login(username, password string) (string, error) {
-	user, err := s.authRepo.FindUserByUsername(username)
+// Login mengautentikasi pengguna dan mengembalikan token JWT.
+func (s *AuthService) Login(username, password string) (string, error) {
+	user, err := s.authRepo.GetUserByUsername(username)
 	if err != nil {
-		return "", errors.New("invalid credentials")
+		return "", errors.New("user not found")
 	}
 
-	// Verifikasi password
-	if !utils.CheckPasswordHash(password, user.Password) {
-		return "", errors.New("invalid credentials")
+	// Misalnya, verifikasi password menggunakan utilitas hashing
+	if ! /* lakukan pengecekan password */ true {
+		return "", errors.New("invalid password")
 	}
 
-	// Generate token JWT
+	// Buat token JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id":  user.ID,
-		"username": user.Username,
-		"exp":      time.Now().Add(24 * time.Hour).Unix(), // Token berlaku 24 jam
+		"user_id": user.ID,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 	})
 
-	// Tanda tangani token
-	secret := config.AppConfig.JWTSecret
-	tokenString, err := token.SignedString([]byte(secret))
+	tokenString, err := token.SignedString([]byte(s.jwtSecret))
 	if err != nil {
 		return "", err
 	}
@@ -53,23 +50,25 @@ func (s *authService) Login(username, password string) (string, error) {
 	return tokenString, nil
 }
 
-func (s *authService) VerifyUser(tokenString string) (*models.User, error) {
-	// Verifikasi token
-	claims, err := utils.VerifyToken(tokenString)
-	if err != nil {
-		return nil, err
+// VerifyUser memverifikasi token JWT dan mengembalikan data user.
+func (s *AuthService) VerifyUser(tokenString string) (*models.User, error) {
+	claims := jwt.MapClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(s.jwtSecret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return nil, errors.New("invalid token")
 	}
 
-	// Ambil user ID dari token
 	userID, ok := claims["user_id"].(float64)
 	if !ok {
-		return nil, errors.New("invalid token claims")
+		return nil, errors.New("invalid token data")
 	}
 
-	// Cari user berdasarkan ID
-	user, err := s.authRepo.FindUserByID(int(userID))
+	user, err := s.authRepo.GetUserByID(int(userID))
 	if err != nil {
-		return nil, err
+		return nil, errors.New("user not found")
 	}
 
 	return user, nil

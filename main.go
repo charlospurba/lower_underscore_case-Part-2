@@ -30,8 +30,8 @@ func main() {
 	authRepo := repositories.NewAuthRepository(db)
 	userRepo := repositories.NewUserRepository(db)
 
-	// Inisialisasi service
-	authService := services.NewAuthService(authRepo)
+	// Inisialisasi service (Tambahkan JWT Secret dari .env)
+	authService := services.NewAuthService(authRepo, config.AppConfig.JWTSecret)
 	userService := services.NewUserService(userRepo)
 
 	// Inisialisasi handler
@@ -45,11 +45,11 @@ func main() {
 	r.SetTrustedProxies(nil)
 
 	// Tambahkan endpoint Swagger
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler)) // ✅ Perbaiki `files` menjadi `swaggerFiles`
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Setup routes
 	routes.AuthRoutes(r, authHandler)
-	routes.UserRoutes(r, userHandler, gin.Logger()) // ✅ Pastikan argumen sesuai
+	routes.UserRoutes(r, userHandler, gin.Logger())
 
 	// Jalankan server
 	r.Run(":8080")

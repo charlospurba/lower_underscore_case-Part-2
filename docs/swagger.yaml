@@ -140,6 +140,39 @@ paths:
       summary: Logout from the system
       tags:
       - auth
+  /auth/verify:
+    get:
+      consumes:
+      - application/json
+      description: Verify the provided JWT token and return user information
+      parameters:
+      - description: Bearer JWT token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User data
+          schema:
+            $ref: '#/definitions/dto.UserDTO'
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify JWT token
+      tags:
+      - auth
   /users:
     get:
       consumes:

@@ -9,11 +9,11 @@ import (
 
 // AuthHandler handles authentication-related requests.
 type AuthHandler struct {
-	authService services.AuthService
+	authService *services.AuthService
 }
 
 // NewAuthHandler creates a new AuthHandler instance.
-func NewAuthHandler(service services.AuthService) *AuthHandler {
+func NewAuthHandler(service *services.AuthService) *AuthHandler {
 	return &AuthHandler{authService: service}
 }
 
@@ -57,12 +57,13 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // VerifyToken godoc
 // @Summary Verify JWT token
 // @Description Verify the provided JWT token and return user information
-// @Tags Authentication
+// @Tags auth
 // @Accept  json
 // @Produce  json
 // @Param Authorization header string true "Bearer JWT token"
-// @Success 200 {object} map[string]interface{} {"user": {"id": "int", "username": "string", "first_name": "string", "last_name": "string", "email": "string"}}
-// @Failure 401 {object} map[string]string {"error": "Unauthorized"}
+// @Success 200 {object} dto.UserDTO "User data"
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 401 {object} map[string]string "Unauthorized"
 // @Router /auth/verify [get]
 func (h *AuthHandler) VerifyToken(c *gin.Context) {
 	// Ambil token dari header Authorization
@@ -81,13 +82,14 @@ func (h *AuthHandler) VerifyToken(c *gin.Context) {
 		return
 	}
 
+	// Menggunakan DTO UserDTO untuk response
 	c.JSON(http.StatusOK, gin.H{
-		"user": gin.H{
-			"id":         user.ID,
-			"username":   user.Username,
-			"first_name": user.FirstName,
-			"last_name":  user.LastName,
-			"email":      user.Email,
+		"user": dto.UserDTO{
+			ID:        user.ID,
+			Username:  user.Username,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Email:     user.Email,
 		},
 	})
 }
