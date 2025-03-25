@@ -10,7 +10,7 @@ import (
 func UserRouter(r *gin.Engine, userHandler *handlers.UserHandler, authMiddleware gin.HandlerFunc) {
 	// Group untuk Protected Routes
 	protected := r.Group("/users")
-	protected.Use(authMiddleware) // Middleware diterapkan di sini
+	protected.Use(authMiddleware) 
 	{
 		protected.GET("/", userHandler.GetUsers)
 		protected.GET("/:id", userHandler.GetUserByID)

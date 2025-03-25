@@ -8,9 +8,9 @@ import (
 	"gin-user-app/routes"
 	"gin-user-app/services"
 
-	_ "gin-user-app/docs" // Import untuk Swagger docs
+	_ "gin-user-app/docs"
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/files" // ✅ Perbaiki import
+	"github.com/swaggo/files"
 	"github.com/swaggo/gin-swagger"
 )
 

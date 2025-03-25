@@ -89,7 +89,7 @@ func (s *UserServiceImpl) CreateUser(user dto.CreateUserDTO) (dto.UserDTO, error
 
 	newUser := models.User{
 		Username:  user.Username,
-		Password:  hashedPassword, // ⬅️ Simpan password yang sudah di-hash
+		Password:  hashedPassword, 
 		Email:     user.Email,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
@@ -128,7 +128,7 @@ func (s *UserServiceImpl) UpdateUser(id int, user dto.UpdateUserDTO) (dto.UserDT
 		existingUser.Username = user.Username
 	}
 	if user.Password != "" {
-		existingUser.Password = user.Password // TODO: Hash password sebelum disimpan
+		existingUser.Password = user.Password 
 	}
 	if user.Email != "" {
 		existingUser.Email = user.Email

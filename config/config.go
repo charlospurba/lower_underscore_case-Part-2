@@ -21,8 +21,8 @@ var AppConfig Config
 
 func LoadConfig() {
 	viper.SetConfigFile(".env")
-	viper.SetConfigType("env") // Pastikan membaca file ENV
-	viper.AutomaticEnv()       // Baca dari environment jika ada
+	viper.SetConfigType("env") 
+	viper.AutomaticEnv()       
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Warning: .env file not found, trying to read from environment variables")

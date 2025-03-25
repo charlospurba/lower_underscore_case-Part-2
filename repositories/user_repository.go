@@ -14,7 +14,7 @@ type UserRepository interface {
 	Create(user models.User) (models.User, error)
 	Update(user models.User) (models.User, error)
 	Delete(id int) error
-	FindByUsername(username string) (models.User, error) // ✅ Tambahkan fungsi ini
+	FindByUsername(username string) (models.User, error) 
 }
 
 // userRepositoryImpl implementasi dari UserRepository
