@@ -2,17 +2,20 @@ package routes
 
 import (
 	"gin-user-app/handlers"
+
 	"github.com/gin-gonic/gin"
 )
 
-// UserRoutes mengatur rute user dengan middleware autentikasi
-func UserRoutes(router *gin.Engine, userHandler *handlers.UserHandler, authMiddleware gin.HandlerFunc) {
-	userGroup := router.Group("/users")
-	userGroup.Use(authMiddleware) // Gunakan middleware auth
-
-	userGroup.GET("/", userHandler.GetUsers)
-	userGroup.GET("/:id", userHandler.GetUserByID)
-	userGroup.POST("/", userHandler.CreateUser)
-	userGroup.PUT("/:id", userHandler.UpdateUser)
-	userGroup.DELETE("/:id", userHandler.DeleteUser)
+// UserRouter mengatur rute pengguna
+func UserRouter(r *gin.Engine, userHandler *handlers.UserHandler, authMiddleware gin.HandlerFunc) {
+	// Group untuk Protected Routes
+	protected := r.Group("/users")
+	protected.Use(authMiddleware) // Middleware diterapkan di sini
+	{
+		protected.GET("/", userHandler.GetUsers)
+		protected.GET("/:id", userHandler.GetUserByID)
+		protected.POST("/", userHandler.CreateUser)
+		protected.PUT("/:id", userHandler.UpdateUser)
+		protected.DELETE("/:id", userHandler.DeleteUser)
+	}
 }

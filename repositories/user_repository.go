@@ -1,54 +1,79 @@
 package repositories
 
 import (
+	"errors"
 	"gin-user-app/models"
 
 	"gorm.io/gorm"
 )
 
-// Definisikan interface UserRepository
+// UserRepository mendefinisikan operasi database untuk User
 type UserRepository interface {
-	GetUsers() ([]models.User, error)
-	GetUserByID(id int) (*models.User, error)
-	CreateUser(user *models.User) error
-	UpdateUser(user *models.User) error
-	DeleteUser(id int) error
+	GetAll() ([]models.User, error)
+	GetByID(id int) (models.User, error)
+	Create(user models.User) (models.User, error)
+	Update(user models.User) (models.User, error)
+	Delete(id int) error
+	FindByUsername(username string) (models.User, error) // ✅ Tambahkan fungsi ini
 }
 
-// Struct untuk implementasi UserRepository
-type userRepository struct {
+// userRepositoryImpl implementasi dari UserRepository
+type userRepositoryImpl struct {
 	db *gorm.DB
 }
 
-// Constructor untuk inisialisasi UserRepository dengan dependency injection
+// NewUserRepository membuat instance baru dari UserRepository
 func NewUserRepository(db *gorm.DB) UserRepository {
-	return &userRepository{db: db}
+	return &userRepositoryImpl{db: db}
 }
 
-// Implementasi fungsi-fungsi repository
-func (r *userRepository) GetUsers() ([]models.User, error) {
+// GetAll mengambil semua user dari database
+func (r *userRepositoryImpl) GetAll() ([]models.User, error) {
 	var users []models.User
-	err := r.db.Find(&users).Error
-	return users, err
-}
-
-func (r *userRepository) GetUserByID(id int) (*models.User, error) {
-	var user models.User
-	err := r.db.First(&user, id).Error
-	if err != nil {
-		return nil, err
+	result := r.db.Find(&users)
+	if result.Error != nil {
+		return nil, result.Error
 	}
-	return &user, nil
+	return users, nil
 }
 
-func (r *userRepository) CreateUser(user *models.User) error {
-	return r.db.Create(user).Error
+// GetByID mengambil user berdasarkan ID
+func (r *userRepositoryImpl) GetByID(id int) (models.User, error) {
+	var user models.User
+	result := r.db.First(&user, id)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return models.User{}, errors.New("user not found")
+	}
+	return user, result.Error
 }
 
-func (r *userRepository) UpdateUser(user *models.User) error {
-	return r.db.Save(user).Error
+// FindByUsername mencari user berdasarkan username
+func (r *userRepositoryImpl) FindByUsername(username string) (models.User, error) {
+	var user models.User
+	result := r.db.Where("username = ?", username).First(&user)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return models.User{}, errors.New("user not found")
+	}
+	return user, result.Error
 }
 
-func (r *userRepository) DeleteUser(id int) error {
-	return r.db.Delete(&models.User{}, id).Error
+// Create menambahkan user baru ke database
+func (r *userRepositoryImpl) Create(user models.User) (models.User, error) {
+	result := r.db.Create(&user)
+	return user, result.Error
+}
+
+// Update memperbarui data user yang ada di database
+func (r *userRepositoryImpl) Update(user models.User) (models.User, error) {
+	result := r.db.Save(&user)
+	return user, result.Error
+}
+
+// Delete menghapus user berdasarkan ID
+func (r *userRepositoryImpl) Delete(id int) error {
+	result := r.db.Delete(&models.User{}, id)
+	if result.RowsAffected == 0 {
+		return errors.New("user not found")
+	}
+	return result.Error
 }

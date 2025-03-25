@@ -65,25 +65,6 @@ definitions:
       username:
         type: string
     type: object
-  models.User:
-    properties:
-      age:
-        type: integer
-      created_at:
-        type: string
-      email:
-        type: string
-      first_name:
-        type: string
-      id:
-        type: integer
-      last_name:
-        type: string
-      updated_at:
-        type: string
-      username:
-        type: string
-    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -177,12 +158,12 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve a list of all users
+      description: Retrieve a list of users
       produces:
       - application/json
       responses:
         "200":
-          description: List of users
+          description: OK
           schema:
             items:
               $ref: '#/definitions/dto.UserDTO'
@@ -195,15 +176,15 @@ paths:
             type: object
       summary: Get all users
       tags:
-      - users
+      - Users
     post:
       consumes:
       - application/json
-      description: Create a new user with the provided details
+      description: Register a new user
       parameters:
-      - description: User Request
+      - description: User data
         in: body
-        name: userRequest
+        name: user
         required: true
         schema:
           $ref: '#/definitions/dto.CreateUserDTO'
@@ -211,11 +192,11 @@ paths:
       - application/json
       responses:
         "201":
-          description: User created
+          description: Created
           schema:
-            $ref: '#/definitions/models.User'
+            $ref: '#/definitions/dto.UserDTO'
         "400":
-          description: Bad request
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
@@ -228,7 +209,7 @@ paths:
             type: object
       summary: Create a new user
       tags:
-      - users
+      - Users
   /users/{id}:
     delete:
       consumes:
@@ -243,25 +224,27 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: User deleted successfully
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
             type: object
         "404":
-          description: User not found
+          description: Not Found
           schema:
             additionalProperties:
               type: string
             type: object
       summary: Delete a user
       tags:
-      - users
+      - Users
     get:
       consumes:
       - application/json
-      description: Retrieve user details by user ID
+      description: Retrieve user details by ID
       parameters:
       - description: User ID
         in: path
@@ -272,31 +255,37 @@ paths:
       - application/json
       responses:
         "200":
-          description: User details
+          description: OK
           schema:
             $ref: '#/definitions/dto.UserDTO'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "404":
-          description: User not found
+          description: Not Found
           schema:
             additionalProperties:
               type: string
             type: object
       summary: Get a user by ID
       tags:
-      - users
+      - Users
     put:
       consumes:
       - application/json
-      description: Update an existing user details
+      description: Update user details
       parameters:
       - description: User ID
         in: path
         name: id
         required: true
         type: integer
-      - description: User Update Request
+      - description: Updated user data
         in: body
-        name: userRequest
+        name: user
         required: true
         schema:
           $ref: '#/definitions/dto.UpdateUserDTO'
@@ -304,22 +293,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: User updated
+          description: OK
           schema:
-            $ref: '#/definitions/models.User'
+            $ref: '#/definitions/dto.UserDTO'
         "400":
-          description: Bad request
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
             type: object
         "404":
-          description: User not found
+          description: Not Found
           schema:
             additionalProperties:
               type: string
             type: object
-      summary: Update an existing user
+      summary: Update a user
       tags:
-      - users
+      - Users
 swagger: "2.0"

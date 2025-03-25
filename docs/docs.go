@@ -142,7 +142,7 @@ const docTemplate = `{
         },
         "/users": {
             "get": {
-                "description": "Retrieve a list of all users",
+                "description": "Retrieve a list of users",
                 "consumes": [
                     "application/json"
                 ],
@@ -150,12 +150,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Users"
                 ],
                 "summary": "Get all users",
                 "responses": {
                     "200": {
-                        "description": "List of users",
+                        "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -175,7 +175,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new user with the provided details",
+                "description": "Register a new user",
                 "consumes": [
                     "application/json"
                 ],
@@ -183,13 +183,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Users"
                 ],
                 "summary": "Create a new user",
                 "parameters": [
                     {
-                        "description": "User Request",
-                        "name": "userRequest",
+                        "description": "User data",
+                        "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -199,13 +199,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "User created",
+                        "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.User"
+                            "$ref": "#/definitions/dto.UserDTO"
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -227,7 +227,7 @@ const docTemplate = `{
         },
         "/users/{id}": {
             "get": {
-                "description": "Retrieve user details by user ID",
+                "description": "Retrieve user details by ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -235,7 +235,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Users"
                 ],
                 "summary": "Get a user by ID",
                 "parameters": [
@@ -249,13 +249,22 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "User details",
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/dto.UserDTO"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
-                        "description": "User not found",
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -266,7 +275,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update an existing user details",
+                "description": "Update user details",
                 "consumes": [
                     "application/json"
                 ],
@@ -274,9 +283,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Users"
                 ],
-                "summary": "Update an existing user",
+                "summary": "Update a user",
                 "parameters": [
                     {
                         "type": "integer",
@@ -286,8 +295,8 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "User Update Request",
-                        "name": "userRequest",
+                        "description": "Updated user data",
+                        "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -297,13 +306,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "User updated",
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.User"
+                            "$ref": "#/definitions/dto.UserDTO"
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -312,7 +321,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -331,7 +340,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Users"
                 ],
                 "summary": "Delete a user",
                 "parameters": [
@@ -344,8 +353,11 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "User deleted successfully",
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -354,7 +366,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -436,35 +448,6 @@ const docTemplate = `{
             }
         },
         "dto.UserDTO": {
-            "type": "object",
-            "properties": {
-                "age": {
-                    "type": "integer"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "last_name": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.User": {
             "type": "object",
             "properties": {
                 "age": {

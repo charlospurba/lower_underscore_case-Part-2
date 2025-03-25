@@ -1,157 +1,63 @@
 package handlers
 
 import (
-	"gin-user-app/dto"
-	"gin-user-app/models"
-	"gin-user-app/services"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"gin-user-app/dto"
+	"gin-user-app/services"
+	"github.com/gin-gonic/gin"
 )
 
-// UserHandler handles user-related requests.
+// UserHandler menangani request terkait user
 type UserHandler struct {
 	userService services.UserService
 }
 
-// NewUserHandler creates a new UserHandler instance.
+// NewUserHandler membuat instance baru dari UserHandler
 func NewUserHandler(service services.UserService) *UserHandler {
-	return &UserHandler{userService: service}
+	return &UserHandler{
+		userService: service,
+	}
 }
 
-// GetUsers godoc
+// GetUsers mendapatkan semua user
 // @Summary Get all users
-// @Description Retrieve a list of all users
-// @Tags users
-// @Accept json
-// @Produce json
-// @Success 200 {array} dto.UserDTO "List of users"
-// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Description Retrieve a list of users
+// @Tags Users
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} dto.UserDTO
+// @Failure 500 {object} map[string]string
 // @Router /users [get]
 func (h *UserHandler) GetUsers(c *gin.Context) {
-	users, err := h.userService.GetUsers()
+	users, err := h.userService.GetAllUsers()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
 		return
 	}
-
-	var usersDTO []dto.UserDTO
-	for _, user := range users {
-		usersDTO = append(usersDTO, dto.UserDTO{
-			ID:        user.ID,
-			Username:  user.Username,
-			Email:     user.Email,
-			FirstName: user.FirstName,
-			LastName:  user.LastName,
-			Age:       user.Age,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-		})
-	}
-
-	c.JSON(http.StatusOK, usersDTO)
+	c.JSON(http.StatusOK, users)
 }
 
-// GetUserByID godoc
+// GetUserByID mendapatkan user berdasarkan ID
 // @Summary Get a user by ID
-// @Description Retrieve user details by user ID
-// @Tags users
-// @Accept json
-// @Produce json
+// @Description Retrieve user details by ID
+// @Tags Users
+// @Accept  json
+// @Produce  json
 // @Param id path int true "User ID"
-// @Success 200 {object} dto.UserDTO "User details"
-// @Failure 404 {object} map[string]string "User not found"
+// @Success 200 {object} dto.UserDTO
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
 // @Router /users/{id} [get]
 func (h *UserHandler) GetUserByID(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
 	user, err := h.userService.GetUserByID(id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
-
-	userDTO := dto.UserDTO{
-		ID:        user.ID,
-		Username:  user.Username,
-		Email:     user.Email,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Age:       user.Age,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-	}
-
-	c.JSON(http.StatusOK, userDTO)
-}
-
-// CreateUser godoc
-// @Summary Create a new user
-// @Description Create a new user with the provided details
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param userRequest body dto.CreateUserDTO true "User Request"
-// @Success 201 {object} models.User "User created"
-// @Failure 400 {object} map[string]string "Bad request"
-// @Failure 500 {object} map[string]string "Internal Server Error"
-// @Router /users [post]
-func (h *UserHandler) CreateUser(c *gin.Context) {
-	var createUserReq dto.CreateUserDTO
-	if err := c.ShouldBindJSON(&createUserReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	user := models.User{
-		Username:  createUserReq.Username,
-		Password:  createUserReq.Password, // Must hash password before saving
-		Email:     createUserReq.Email,
-		FirstName: createUserReq.FirstName,
-		LastName:  createUserReq.LastName,
-		Age:       createUserReq.Age,
-	}
-
-	err := h.userService.CreateUser(&user)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, user)
-}
-
-// UpdateUser godoc
-// @Summary Update an existing user
-// @Description Update an existing user details
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param id path int true "User ID"
-// @Param userRequest body dto.UpdateUserDTO true "User Update Request"
-// @Success 200 {object} models.User "User updated"
-// @Failure 400 {object} map[string]string "Bad request"
-// @Failure 404 {object} map[string]string "User not found"
-// @Router /users/{id} [put]
-func (h *UserHandler) UpdateUser(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-
-	var updateUserReq dto.UpdateUserDTO
-	if err := c.ShouldBindJSON(&updateUserReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	user := models.User{
-		ID:        id,
-		Username:  updateUserReq.Username,
-		Password:  updateUserReq.Password, // Must hash password before saving
-		Email:     updateUserReq.Email,
-		FirstName: updateUserReq.FirstName,
-		LastName:  updateUserReq.LastName,
-		Age:       updateUserReq.Age,
-	}
-
-	err := h.userService.UpdateUser(&user)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
@@ -160,23 +66,104 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// DeleteUser godoc
-// @Summary Delete a user
-// @Description Delete a user by ID
-// @Tags users
-// @Accept json
-// @Produce json
+// CreateUser membuat user baru
+// @Summary Create a new user
+// @Description Register a new user
+// @Tags Users
+// @Accept  json
+// @Produce  json
+// @Param user body dto.CreateUserDTO true "User data"
+// @Success 201 {object} dto.UserDTO
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /users [post]
+func (h *UserHandler) CreateUser(c *gin.Context) {
+	var userReq dto.CreateUserDTO
+	if err := c.ShouldBindJSON(&userReq); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	user, err := h.userService.CreateUser(userReq)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, user)
+}
+
+// UpdateUser memperbarui data user berdasarkan ID
+// @Summary Update a user
+// @Description Update user details
+// @Tags Users
+// @Accept  json
+// @Produce  json
 // @Param id path int true "User ID"
-// @Success 200 {object} map[string]string "User deleted successfully"
-// @Failure 404 {object} map[string]string "User not found"
-// @Router /users/{id} [delete]
-func (h *UserHandler) DeleteUser(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	err := h.userService.DeleteUser(id)
+// @Param user body dto.UpdateUserDTO true "Updated user data"
+// @Success 200 {object} dto.UserDTO
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /users/{id} [put]
+func (h *UserHandler) UpdateUser(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	// Cek apakah user ada sebelum diupdate
+	_, err = h.userService.GetUserByID(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+	var userReq dto.UpdateUserDTO
+	if err := c.ShouldBindJSON(&userReq); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	user, err := h.userService.UpdateUser(id, userReq)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
+// DeleteUser menghapus user berdasarkan ID
+// @Summary Delete a user
+// @Description Delete a user by ID
+// @Tags Users
+// @Accept  json
+// @Produce  json
+// @Param id path int true "User ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /users/{id} [delete]
+func (h *UserHandler) DeleteUser(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	// Cek apakah user ada sebelum dihapus
+	_, err = h.userService.GetUserByID(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	err = h.userService.DeleteUser(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }

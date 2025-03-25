@@ -49,7 +49,7 @@ func main() {
 
 	// Setup routes
 	routes.AuthRoutes(r, authHandler)
-	routes.UserRoutes(r, userHandler, gin.Logger())
+	routes.UserRouter(r, userHandler, gin.Logger())
 
 	// Jalankan server
 	r.Run(":8080")

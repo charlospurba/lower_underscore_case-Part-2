@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -20,10 +21,15 @@ var AppConfig Config
 
 func LoadConfig() {
 	viper.SetConfigFile(".env")
+	viper.SetConfigType("env") // Pastikan membaca file ENV
+	viper.AutomaticEnv()       // Baca dari environment jika ada
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading .env file: %v", err)
+		log.Printf("Warning: .env file not found, trying to read from environment variables")
 	}
+
+	// Debugging - cek apakah file terbaca
+	fmt.Println("Reading .env file...")
 
 	AppConfig = Config{
 		DBHost:     viper.GetString("DB_HOST"),
@@ -34,6 +40,20 @@ func LoadConfig() {
 		JWTSecret:  viper.GetString("JWT_SECRET"),
 	}
 
-	// Set env variables (in case they are needed elsewhere)
+	// Debugging - tampilkan hasil
+	fmt.Println("Loaded Config:")
+	fmt.Println("DB_HOST:", AppConfig.DBHost)
+	fmt.Println("DB_PORT:", AppConfig.DBPort)
+	fmt.Println("DB_USER:", AppConfig.DBUser)
+	fmt.Println("DB_PASSWORD:", AppConfig.DBPassword)
+	fmt.Println("DB_NAME:", AppConfig.DBName)
+	fmt.Println("JWT_SECRET:", AppConfig.JWTSecret)
+
+	// Cek apakah JWT_SECRET kosong
+	if AppConfig.JWTSecret == "" {
+		log.Fatalf("ERROR: JWT_SECRET is missing or empty!")
+	}
+
+	// Set env variables (optional)
 	os.Setenv("JWT_SECRET", AppConfig.JWTSecret)
 }

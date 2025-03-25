@@ -31,7 +31,12 @@ func NewAuthHandler(service *services.AuthService) *AuthHandler {
 func (h *AuthHandler) Login(c *gin.Context) {
 	var loginReq dto.LoginRequestDTO
 	if err := c.ShouldBindJSON(&loginReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	if loginReq.Username == "" || loginReq.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Username and password are required"})
 		return
 	}
 
@@ -66,14 +71,12 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Router /auth/verify [get]
 func (h *AuthHandler) VerifyToken(c *gin.Context) {
-	// Ambil token dari header Authorization
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
 		return
 	}
 
-	// Ambil token dengan format Bearer
 	token := authHeader[len("Bearer "):]
 
 	user, err := h.authService.VerifyUser(token)
@@ -82,14 +85,11 @@ func (h *AuthHandler) VerifyToken(c *gin.Context) {
 		return
 	}
 
-	// Menggunakan DTO UserDTO untuk response
-	c.JSON(http.StatusOK, gin.H{
-		"user": dto.UserDTO{
-			ID:        user.ID,
-			Username:  user.Username,
-			FirstName: user.FirstName,
-			LastName:  user.LastName,
-			Email:     user.Email,
-		},
+	c.JSON(http.StatusOK, dto.UserDTO{
+		ID:        user.ID,
+		Username:  user.Username,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Email:     user.Email,
 	})
 }
