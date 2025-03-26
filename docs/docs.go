@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/auth/login": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Authenticate a user and return a JWT token",
                 "consumes": [
                     "application/json"
@@ -72,6 +77,11 @@ const docTemplate = `{
         },
         "/auth/logout": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Logout and invalidate the current session",
                 "tags": [
                     "auth"
@@ -92,6 +102,11 @@ const docTemplate = `{
         },
         "/auth/verify": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Verify the provided JWT token and return user information",
                 "consumes": [
                     "application/json"
@@ -142,6 +157,11 @@ const docTemplate = `{
         },
         "/users": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve a list of users",
                 "consumes": [
                     "application/json"
@@ -175,6 +195,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Register a new user",
                 "consumes": [
                     "application/json"
@@ -227,6 +252,11 @@ const docTemplate = `{
         },
         "/users/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve user details by ID",
                 "consumes": [
                     "application/json"
@@ -275,6 +305,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update user details",
                 "consumes": [
                     "application/json"
@@ -332,6 +367,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete a user by ID",
                 "consumes": [
                     "application/json"
@@ -475,6 +515,13 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        }
+    },
+        "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`
