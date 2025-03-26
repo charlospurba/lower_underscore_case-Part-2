@@ -27,6 +27,7 @@ func NewUserHandler(service services.UserService) *UserHandler {
 // @Tags Users
 // @Accept  json
 // @Produce  json
+// @Security BearerAuth
 // @Success 200 {array} dto.UserDTO
 // @Failure 500 {object} map[string]string
 // @Router /users [get]
@@ -45,6 +46,7 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 // @Tags Users
 // @Accept  json
 // @Produce  json
+// @Security BearerAuth
 // @Param id path int true "User ID"
 // @Success 200 {object} dto.UserDTO
 // @Failure 400 {object} map[string]string
@@ -72,6 +74,7 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 // @Tags Users
 // @Accept  json
 // @Produce  json
+// @Security BearerAuth
 // @Param user body dto.CreateUserDTO true "User data"
 // @Success 201 {object} dto.UserDTO
 // @Failure 400 {object} map[string]string
@@ -99,6 +102,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 // @Tags Users
 // @Accept  json
 // @Produce  json
+// @Security BearerAuth
 // @Param id path int true "User ID"
 // @Param user body dto.UpdateUserDTO true "Updated user data"
 // @Success 200 {object} dto.UserDTO
@@ -140,6 +144,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // @Tags Users
 // @Accept  json
 // @Produce  json
+// @Security BearerAuth
 // @Param id path int true "User ID"
 // @Success 204 "No Content"
 // @Failure 400 {object} map[string]string

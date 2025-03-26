@@ -23,6 +23,7 @@ func NewAuthHandler(service *services.AuthService) *AuthHandler {
 // @Tags auth
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param loginRequest body dto.LoginRequestDTO true "Login Request"
 // @Success 200 {object} map[string]string "Success"
 // @Failure 400 {object} map[string]string "Invalid request"
@@ -53,6 +54,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 // @Summary Logout from the system
 // @Description Logout and invalidate the current session
 // @Tags auth
+// @Security BearerAuth
 // @Success 200 {object} map[string]string "Success"
 // @Router /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
@@ -65,6 +67,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Tags auth
 // @Accept  json
 // @Produce  json
+// @Security BearerAuth
 // @Param Authorization header string true "Bearer JWT token"
 // @Success 200 {object} dto.UserDTO "User data"
 // @Failure 400 {object} map[string]string "Bad request"

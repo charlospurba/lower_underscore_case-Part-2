@@ -4,6 +4,7 @@ import (
 	"gin-user-app/config"
 	"gin-user-app/database"
 	"gin-user-app/handlers"
+	"gin-user-app/middleware"
 	"gin-user-app/repositories"
 	"gin-user-app/routes"
 	"gin-user-app/services"
@@ -37,6 +38,7 @@ func main() {
 	// Inisialisasi handler
 	authHandler := handlers.NewAuthHandler(authService)
 	userHandler := handlers.NewUserHandler(userService)
+	
 
 	// Setup router
 	r := gin.Default()
@@ -49,7 +51,7 @@ func main() {
 
 	// Setup routes
 	routes.AuthRoutes(r, authHandler)
-	routes.UserRouter(r, userHandler, gin.Logger())
+	routes.UserRouter(r, userHandler, middleware.AuthMiddleware())
 
 	// Jalankan server
 	r.Run(":8080")

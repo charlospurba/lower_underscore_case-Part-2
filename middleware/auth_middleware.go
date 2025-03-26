@@ -8,10 +8,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// Secret key untuk verifikasi JWT (HARUS SAMA dengan key saat generate token)
+// Secret key untuk JWT (HARUS SAMA dengan saat generate token)
 var jwtSecret = []byte("your_secret_key")
 
-// AuthMiddleware untuk melindungi route
+// AuthMiddleware untuk proteksi route dengan JWT
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Ambil token dari header Authorization
@@ -22,7 +22,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Pastikan formatnya "Bearer <token>"
+		// Format token harus "Bearer <token>"
 		tokenParts := strings.Split(authHeader, " ")
 		if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
