@@ -9,13 +9,13 @@ import (
 func UserRouter(r *gin.Engine, userHandler *handlers.UserHandler, authMiddleware gin.HandlerFunc) {
 	// Group untuk Protected Routes
 	protected := r.Group("/users")
-	protected.Use(authMiddleware) 
+	protected.Use(authMiddleware)
 
 	{
-		protected.GET("/", userHandler.GetUsers)         
-		protected.GET("/:id", userHandler.GetUserByID)   // GET /users/:id (Butuh Auth)
-		protected.POST("/", userHandler.CreateUser)      // POST /users (Butuh Auth)
-		protected.PUT("/:id", userHandler.UpdateUser)    // PUT /users/:id (Butuh Auth)
-		protected.DELETE("/:id", userHandler.DeleteUser) // DELETE /users/:id (Butuh Auth)
+		protected.GET("/", userHandler.GetUsers)
+		protected.GET("/:id", userHandler.GetUserByID)
+		protected.POST("/", userHandler.CreateUser)
+		protected.PUT("/:id", userHandler.UpdateUser)
+		protected.DELETE("/:id", userHandler.DeleteUser)
 	}
 }
