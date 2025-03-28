@@ -17,11 +17,6 @@ const docTemplate = `{
     "paths": {
         "/auth/login": {
             "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "description": "Authenticate a user and return a JWT token",
                 "consumes": [
                     "application/json"

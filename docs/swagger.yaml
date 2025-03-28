@@ -105,8 +105,6 @@ paths:
             additionalProperties:
               type: string
             type: object
-      security:
-        - BearerAuth: []
       summary: Login to the system
       tags:
         - auth

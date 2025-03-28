@@ -38,7 +38,6 @@ func main() {
 	// Inisialisasi handler
 	authHandler := handlers.NewAuthHandler(authService)
 	userHandler := handlers.NewUserHandler(userService)
-	
 
 	// Setup router
 	r := gin.Default()
@@ -51,7 +50,7 @@ func main() {
 
 	// Setup routes
 	routes.AuthRoutes(r, authHandler)
-	routes.UserRouter(r, userHandler, middleware.AuthMiddleware())
+	routes.UserRouter(r, userHandler, middleware.AuthMiddleware(authRepo, config.AppConfig.JWTSecret))
 
 	// Jalankan server
 	r.Run(":8080")

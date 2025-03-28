@@ -8,14 +8,15 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"gin-user-app/models" 
 )
 
 var DB *gorm.DB
 
 func InitDB() *gorm.DB {
-	// Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Gagal memuat file .env", err)
+		log.Fatal("Gagal memuat file .env:", err)
 	}
 
 	dsn := fmt.Sprintf(
@@ -31,6 +32,11 @@ func InitDB() *gorm.DB {
 	if err != nil {
 		log.Fatal("Gagal terhubung ke database:", err)
 		return nil
+	}
+
+	err = db.AutoMigrate(&models.BlacklistedToken{})
+	if err != nil {
+		log.Fatal("Gagal migrasi database:", err)
 	}
 
 	DB = db

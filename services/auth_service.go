@@ -50,6 +50,10 @@ func (s *AuthService) Login(username, password string) (string, error) {
 	return tokenString, nil
 }
 
+func (s *AuthService) Logout(token string) error {
+	return s.authRepo.BlacklistToken(token)
+}
+
 // VerifyUser verifies a JWT token and returns user data.
 func (s *AuthService) VerifyUser(tokenString string) (*models.User, error) {
 	claims := jwt.MapClaims{}
