@@ -3,9 +3,9 @@ package handlers
 import (
 	"gin-user-app/dto"
 	"gin-user-app/services"
+	"gin-user-app/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strings"
 )
 
 // AuthHandler handles authentication-related requests.
@@ -51,41 +51,6 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
-// Logout godoc
-// @Summary Logout from the system
-// @Description Logout and invalidate the current session
-// @Tags auth
-// @Security BearerAuth
-// @Success 200 {object} map[string]string "Success"
-// @Failure 400 {object} map[string]string "Bad request"
-// @Failure 500 {object} map[string]string "Failed to logout"
-// @Router /auth/logout [post]
-func (h *AuthHandler) Logout(c *gin.Context) {
-	// Ambil token dari header Authorization
-	tokenString := c.GetHeader("Authorization")
-	if tokenString == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token required"})
-		return
-	}
-
-	// Ambil token asli (tanpa "Bearer ")
-	tokenParts := strings.Split(tokenString, " ")
-	if len(tokenParts) != 2 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
-		return
-	}
-	tokenString = tokenParts[1]
-
-	// Simpan token ke dalam blacklist
-	err := h.authService.Logout(tokenString)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to logout"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
-}
-
 // VerifyToken godoc
 // @Summary Verify JWT token
 // @Description Verify the provided JWT token and return user information
@@ -106,10 +71,16 @@ func (h *AuthHandler) VerifyToken(c *gin.Context) {
 	}
 
 	token := authHeader[len("Bearer "):]
-
-	user, err := h.authService.VerifyUser(token)
+	claims, err := utils.VerifyToken(token)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+		return
+	}
+
+	userID := int(claims["user_id"].(float64))
+	user, err := h.authService.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 		return
 	}
 

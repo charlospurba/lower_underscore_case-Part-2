@@ -108,21 +108,6 @@ paths:
       summary: Login to the system
       tags:
         - auth
-  /auth/logout:
-    post:
-      description: Logout and invalidate the current session
-      responses:
-        "200":
-          description: Success
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-        - BearerAuth: []
-      summary: Logout from the system
-      tags:
-        - auth
   /auth/verify:
     get:
       consumes:

@@ -8,8 +8,6 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"gin-user-app/models" 
 )
 
 var DB *gorm.DB
@@ -32,11 +30,6 @@ func InitDB() *gorm.DB {
 	if err != nil {
 		log.Fatal("Gagal terhubung ke database:", err)
 		return nil
-	}
-
-	err = db.AutoMigrate(&models.BlacklistedToken{})
-	if err != nil {
-		log.Fatal("Gagal migrasi database:", err)
 	}
 
 	DB = db

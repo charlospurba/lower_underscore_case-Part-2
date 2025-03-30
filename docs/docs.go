@@ -70,86 +70,52 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/logout": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Logout and invalidate the current session",
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Logout from the system",
-                "responses": {
-                    "200": {
-                        "description": "Success",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/auth/verify": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Verify the provided JWT token and return user information",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Verify JWT token",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bearer JWT token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "User data",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UserDTO"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
+  "get": {
+    "security": [
+      {
+        "BearerAuth": []
+      }
+    ],
+    "description": "Verify the provided JWT token and return user information",
+    "consumes": [
+      "application/json"
+    ],
+    "produces": [
+      "application/json"
+    ],
+    "tags": [
+      "auth"
+    ],
+    "summary": "Verify JWT token",
+    "responses": {
+      "200": {
+        "description": "User data",
+        "schema": {
+          "$ref": "#/definitions/dto.UserDTO"
+        }
+      },
+      "400": {
+        "description": "Bad request",
+        "schema": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "schema": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+},
         "/users": {
             "get": {
                 "security": [

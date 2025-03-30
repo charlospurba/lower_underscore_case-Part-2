@@ -4,14 +4,12 @@ import (
 	"net/http"
 	"strings"
 
-	"gin-user-app/repositories"
-
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 // AuthMiddleware untuk proteksi route dengan JWT
-func AuthMiddleware(authRepo *repositories.AuthRepository, jwtSecret string) gin.HandlerFunc {
+func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Ambil token dari header Authorization
 		authHeader := c.GetHeader("Authorization")
@@ -31,13 +29,6 @@ func AuthMiddleware(authRepo *repositories.AuthRepository, jwtSecret string) gin
 
 		tokenString := tokenParts[1]
 
-		// Cek apakah token sudah di-blacklist
-		if authRepo.IsTokenBlacklisted(tokenString) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token has been revoked"})
-			c.Abort()
-			return
-		}
-
 		// Parse token
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -46,6 +37,7 @@ func AuthMiddleware(authRepo *repositories.AuthRepository, jwtSecret string) gin
 			return []byte(jwtSecret), nil
 		})
 
+		// Jika token tidak valid atau error parsing
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			c.Abort()
@@ -60,8 +52,17 @@ func AuthMiddleware(authRepo *repositories.AuthRepository, jwtSecret string) gin
 			return
 		}
 
-		userID := int(claims["user_id"].(float64))
-		c.Set("user_id", userID)
-		c.Next()
+		// Pastikan user_id ada dalam token dan bertipe float64 sebelum dikonversi ke int
+		userIDFloat, exists := claims["user_id"].(float64)
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in token"})
+			c.Abort()
+			return
+		}
+
+		// Simpan user_id di context agar bisa digunakan di handler
+		c.Set("user_id", int(userIDFloat))
+
+		c.Next() // Lanjutkan ke handler berikutnya
 	}
 }

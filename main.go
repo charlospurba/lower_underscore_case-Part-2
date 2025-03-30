@@ -41,16 +41,14 @@ func main() {
 
 	// Setup router
 	r := gin.Default()
-
-	// Menangani proxy (Opsional, direkomendasikan untuk produksi)
 	r.SetTrustedProxies(nil)
 
 	// Tambahkan endpoint Swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Setup routes
-	routes.AuthRoutes(r, authHandler)
-	routes.UserRouter(r, userHandler, middleware.AuthMiddleware(authRepo, config.AppConfig.JWTSecret))
+	routes.AuthRoutes(r, authHandler, middleware.AuthMiddleware(config.AppConfig.JWTSecret))
+	routes.UserRouter(r, userHandler, middleware.AuthMiddleware(config.AppConfig.JWTSecret))
 
 	// Jalankan server
 	r.Run(":8080")

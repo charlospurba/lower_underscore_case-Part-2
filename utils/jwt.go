@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -12,12 +11,11 @@ import (
 
 // GenerateToken membuat JWT token
 func GenerateToken(userID int) (string, error) {
-	// Ambil secret key dari config
 	jwtSecret := []byte(config.AppConfig.JWTSecret)
 
 	claims := jwt.MapClaims{
 		"user_id": userID,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(), // Token berlaku 24 jam
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 		"iat":     time.Now().Unix(),
 	}
 
@@ -30,25 +28,21 @@ func GenerateToken(userID int) (string, error) {
 	return tokenString, nil
 }
 
-// VerifyToken memverifikasi JWT token
+// VerifyToken hanya untuk parsing token, bukan buat handle request HTTP
 func VerifyToken(tokenString string) (jwt.MapClaims, error) {
-	// Ambil secret key dari config
 	jwtSecret := []byte(config.AppConfig.JWTSecret)
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
-		}
+	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil
 	})
 
-	if err != nil {
-		return nil, fmt.Errorf("token parsing failed: %w", err)
+	if err != nil || !token.Valid {
+		return nil, fmt.Errorf("invalid token: %w", err)
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || !token.Valid {
-		return nil, errors.New("invalid token")
+	if !ok {
+		return nil, fmt.Errorf("invalid token claims")
 	}
 
 	return claims, nil
