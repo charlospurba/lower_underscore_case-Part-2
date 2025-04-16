@@ -12,9 +12,9 @@ func UserRouter(r *gin.Engine, userHandler *handlers.UserHandler, authMiddleware
 	protected.Use(authMiddleware)
 
 	{
-		protected.GET("/", userHandler.GetUsers)
+		protected.GET("", userHandler.GetUsers)
 		protected.GET("/:id", userHandler.GetUserByID)
-		protected.POST("/", userHandler.CreateUser)
+		protected.POST("", userHandler.CreateUser)
 		protected.PUT("/:id", userHandler.UpdateUser)
 		protected.DELETE("/:id", userHandler.DeleteUser)
 	}

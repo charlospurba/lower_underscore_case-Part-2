@@ -6,6 +6,7 @@ import (
 	"gin-user-app/models"
 	"gin-user-app/repositories"
 	"gin-user-app/utils"
+	"strings"
 	"time"
 )
 
@@ -75,13 +76,18 @@ func (s *UserServiceImpl) GetUserByID(id int) (dto.UserDTO, error) {
 
 // CreateUser membuat pengguna baru
 func (s *UserServiceImpl) CreateUser(user dto.CreateUserDTO) (dto.UserDTO, error) {
-	// **1. Cek apakah username sudah digunakan**
+	// Validasi email harus @gmail.com
+	if !strings.HasSuffix(user.Email, "@gmail.com") {
+		return dto.UserDTO{}, errors.New("email must be a valid Gmail address (@gmail.com)")
+	}
+
+	// Cek apakah username sudah digunakan
 	existingUser, _ := s.userRepo.FindByUsername(user.Username)
 	if existingUser.ID != 0 {
 		return dto.UserDTO{}, errors.New("username already taken")
 	}
 
-	// **2. Hash password sebelum disimpan**
+	// Hash password sebelum disimpan
 	hashedPassword, err := utils.HashPassword(user.Password)
 	if err != nil {
 		return dto.UserDTO{}, err
@@ -98,13 +104,12 @@ func (s *UserServiceImpl) CreateUser(user dto.CreateUserDTO) (dto.UserDTO, error
 		UpdatedAt: time.Now(),
 	}
 
-	// **3. Simpan user ke database**
+	// Simpan user ke database
 	createdUser, err := s.userRepo.Create(newUser)
 	if err != nil {
 		return dto.UserDTO{}, err
 	}
 
-	// **4. Return data user tanpa password**
 	return dto.UserDTO{
 		ID:        createdUser.ID,
 		Username:  createdUser.Username,
@@ -124,11 +129,20 @@ func (s *UserServiceImpl) UpdateUser(id int, user dto.UpdateUserDTO) (dto.UserDT
 		return dto.UserDTO{}, errors.New("user not found")
 	}
 
+	// Validasi email harus @gmail.com
+	if user.Email != "" && !strings.HasSuffix(user.Email, "@gmail.com") {
+		return dto.UserDTO{}, errors.New("email must be a valid Gmail address (@gmail.com)")
+	}
+
 	if user.Username != "" {
 		existingUser.Username = user.Username
 	}
 	if user.Password != "" {
-		existingUser.Password = user.Password
+		hashedPassword, err := utils.HashPassword(user.Password)
+		if err != nil {
+			return dto.UserDTO{}, err
+		}
+		existingUser.Password = hashedPassword
 	}
 	if user.Email != "" {
 		existingUser.Email = user.Email
