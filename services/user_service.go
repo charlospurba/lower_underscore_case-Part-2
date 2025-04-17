@@ -6,6 +6,7 @@ import (
 	"gin-user-app/models"
 	"gin-user-app/repositories"
 	"gin-user-app/utils"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -38,9 +39,9 @@ func (s *UserServiceImpl) GetAllUsers() ([]dto.UserDTO, error) {
 		return nil, err
 	}
 
-	var usersDTO []dto.UserDTO
+	var userDTOs []dto.UserDTO
 	for _, user := range users {
-		usersDTO = append(usersDTO, dto.UserDTO{
+		userDTOs = append(userDTOs, dto.UserDTO{
 			ID:        user.ID,
 			Username:  user.Username,
 			Email:     user.Email,
@@ -52,14 +53,14 @@ func (s *UserServiceImpl) GetAllUsers() ([]dto.UserDTO, error) {
 		})
 	}
 
-	return usersDTO, nil
+	return userDTOs, nil
 }
 
-// GetUserByID mendapatkan user berdasarkan ID
+// GetUserByID mengambil pengguna berdasarkan ID
 func (s *UserServiceImpl) GetUserByID(id int) (dto.UserDTO, error) {
 	user, err := s.userRepo.GetByID(id)
 	if err != nil {
-		return dto.UserDTO{}, errors.New("user not found")
+		return dto.UserDTO{}, err
 	}
 
 	return dto.UserDTO{
@@ -76,9 +77,37 @@ func (s *UserServiceImpl) GetUserByID(id int) (dto.UserDTO, error) {
 
 // CreateUser membuat pengguna baru
 func (s *UserServiceImpl) CreateUser(user dto.CreateUserDTO) (dto.UserDTO, error) {
+	// Validasi username (3-20 karakter, hanya huruf dan angka)
+	if len(user.Username) < 3 || len(user.Username) > 20 {
+		return dto.UserDTO{}, errors.New("username must be 3-20 characters")
+	}
+	if !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(user.Username) {
+		return dto.UserDTO{}, errors.New("username must contain only letters and numbers")
+	}
+
 	// Validasi email harus @gmail.com
 	if !strings.HasSuffix(user.Email, "@gmail.com") {
 		return dto.UserDTO{}, errors.New("email must be a valid Gmail address (@gmail.com)")
+	}
+
+	// Validasi password (minimal 8 karakter)
+	if len(user.Password) < 8 {
+		return dto.UserDTO{}, errors.New("password must be at least 8 characters")
+	}
+
+	// Validasi first name (3-20 karakter)
+	if len(user.FirstName) < 3 || len(user.FirstName) > 20 {
+		return dto.UserDTO{}, errors.New("first name must be 3-20 characters")
+	}
+
+	// Validasi last name (3-20 karakter)
+	if len(user.LastName) < 3 || len(user.LastName) > 20 {
+		return dto.UserDTO{}, errors.New("last name must be 3-20 characters")
+	}
+
+	// Validasi age (> 15)
+	if user.Age != nil && *user.Age <= 15 {
+		return dto.UserDTO{}, errors.New("age must be greater than 15")
 	}
 
 	// Cek apakah username sudah digunakan
@@ -122,20 +151,50 @@ func (s *UserServiceImpl) CreateUser(user dto.CreateUserDTO) (dto.UserDTO, error
 	}, nil
 }
 
-// UpdateUser memperbarui data pengguna
+// UpdateUser memperbarui pengguna
 func (s *UserServiceImpl) UpdateUser(id int, user dto.UpdateUserDTO) (dto.UserDTO, error) {
-	existingUser, err := s.userRepo.GetByID(id)
-	if err != nil {
-		return dto.UserDTO{}, errors.New("user not found")
+	// Validasi semua field di awal
+	if user.Username != "" {
+		if len(user.Username) < 3 || len(user.Username) > 20 {
+			return dto.UserDTO{}, errors.New("username must be 3-20 characters")
+		}
+		if !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(user.Username) {
+			return dto.UserDTO{}, errors.New("username must contain only letters and numbers")
+		}
 	}
 
-	// Validasi email harus @gmail.com
 	if user.Email != "" && !strings.HasSuffix(user.Email, "@gmail.com") {
 		return dto.UserDTO{}, errors.New("email must be a valid Gmail address (@gmail.com)")
 	}
 
+	if user.Password != "" && len(user.Password) < 8 {
+		return dto.UserDTO{}, errors.New("password must be at least 8 characters")
+	}
+
+	if user.FirstName != "" && (len(user.FirstName) < 3 || len(user.FirstName) > 20) {
+		return dto.UserDTO{}, errors.New("first name must be 3-20 characters")
+	}
+
+	if user.LastName != "" && (len(user.LastName) < 3 || len(user.LastName) > 20) {
+		return dto.UserDTO{}, errors.New("last name must be 3-20 characters")
+	}
+
+	if user.Age != nil && *user.Age <= 15 {
+		return dto.UserDTO{}, errors.New("age must be greater than 15")
+	}
+
+	// Ambil user yang ada
+	existingUser, err := s.userRepo.GetByID(id)
+	if err != nil {
+		return dto.UserDTO{}, err
+	}
+
+	// Update field yang diisi hanya jika validasi lulus
 	if user.Username != "" {
 		existingUser.Username = user.Username
+	}
+	if user.Email != "" {
+		existingUser.Email = user.Email
 	}
 	if user.Password != "" {
 		hashedPassword, err := utils.HashPassword(user.Password)
@@ -143,9 +202,6 @@ func (s *UserServiceImpl) UpdateUser(id int, user dto.UpdateUserDTO) (dto.UserDT
 			return dto.UserDTO{}, err
 		}
 		existingUser.Password = hashedPassword
-	}
-	if user.Email != "" {
-		existingUser.Email = user.Email
 	}
 	if user.FirstName != "" {
 		existingUser.FirstName = user.FirstName
@@ -156,9 +212,9 @@ func (s *UserServiceImpl) UpdateUser(id int, user dto.UpdateUserDTO) (dto.UserDT
 	if user.Age != nil {
 		existingUser.Age = user.Age
 	}
-
 	existingUser.UpdatedAt = time.Now()
 
+	// Simpan perubahan
 	updatedUser, err := s.userRepo.Update(existingUser)
 	if err != nil {
 		return dto.UserDTO{}, err
@@ -176,12 +232,7 @@ func (s *UserServiceImpl) UpdateUser(id int, user dto.UpdateUserDTO) (dto.UserDT
 	}, nil
 }
 
-// DeleteUser menghapus pengguna berdasarkan ID
+// DeleteUser menghapus pengguna
 func (s *UserServiceImpl) DeleteUser(id int) error {
-	_, err := s.userRepo.GetByID(id)
-	if err != nil {
-		return errors.New("user not found")
-	}
-
 	return s.userRepo.Delete(id)
 }
