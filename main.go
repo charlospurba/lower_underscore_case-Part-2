@@ -3,7 +3,6 @@ package main
 import (
 	"gin-user-app/config"
 	"gin-user-app/database"
-	"gin-user-app/dto"
 	"gin-user-app/handlers"
 	"gin-user-app/middleware"
 	"gin-user-app/repositories"
@@ -13,8 +12,6 @@ import (
 	_ "gin-user-app/docs"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -46,11 +43,6 @@ func main() {
 	// Setup router
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
-
-	// Daftarkan validator kustom ke validator yang digunakan Gin
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		dto.RegisterCustomValidations(v)
-	}
 
 	// Tambahkan endpoint Swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

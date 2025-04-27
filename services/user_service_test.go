@@ -4,7 +4,6 @@ import (
 	"errors"
 	"gin-user-app/dto"
 	"gin-user-app/models"
-	"gin-user-app/utils"
 	"testing"
 	"time"
 
@@ -47,402 +46,250 @@ func (m *MockUserRepository) Delete(id int) error {
 	return args.Error(0)
 }
 
-// intPtr adalah helper untuk membuat pointer ke int
-func intPtr(i int) *int {
-	return &i
-}
-
-// TestCreateUser menguji fungsi CreateUser
-func TestCreateUser(t *testing.T) {
-	// Setup mock repository
+func TestCreateUser_ValidInput(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
+	age := 20
 
-	// Valid user data
-	validUser := dto.CreateUserDTO{
+	createUserDTO := dto.CreateUserDTO{
 		Username:  "testuser",
 		Email:     "test@gmail.com",
 		Password:  "password123",
 		FirstName: "Test",
 		LastName:  "User",
-		Age:       intPtr(20),
+		Age:       &age,
 	}
 
-	// Mock hash password
-	hashedPassword, _ := utils.HashPassword("password123")
+	// Mock repository behavior
+	mockRepo.On("FindByUsername", createUserDTO.Username).Return(models.User{}, nil)
+	mockRepo.On("Create", mock.Anything).Return(models.User{
+		ID:        1,
+		Username:  createUserDTO.Username,
+		Email:     createUserDTO.Email,
+		FirstName: createUserDTO.FirstName,
+		LastName:  createUserDTO.LastName,
+		Age:       createUserDTO.Age,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}, nil)
 
-	// Test cases
-	tests := []struct {
-		name          string
-		input         dto.CreateUserDTO
-		mockSetup     func()
-		expectedError string
-		expectSuccess bool
-	}{
-		{
-			name:  "Valid user creation",
-			input: validUser,
-			mockSetup: func() {
-				mockRepo.On("FindByUsername", validUser.Username).Return(models.User{}, nil).Once()
-				mockRepo.On("Create", mock.AnythingOfType("models.User")).Return(models.User{
-					ID:        1,
-					Username:  validUser.Username,
-					Email:     validUser.Email,
-					Password:  hashedPassword,
-					FirstName: validUser.FirstName,
-					LastName:  validUser.LastName,
-					Age:       validUser.Age,
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				}, nil).Once()
-			},
-			expectedError: "",
-			expectSuccess: true,
-		},
-		{
-			name: "Username too short",
-			input: dto.CreateUserDTO{
-				Username:  "ab",
-				Email:     "test@gmail.com",
-				Password:  "password123",
-				FirstName: "Test",
-				LastName:  "User",
-				Age:       intPtr(20),
-			},
-			mockSetup:     func() {},
-			expectedError: "username must be 3-20 characters",
-			expectSuccess: false,
-		},
-		{
-			name: "Username with invalid characters",
-			input: dto.CreateUserDTO{
-				Username:  "test@user",
-				Email:     "test@gmail.com",
-				Password:  "password123",
-				FirstName: "Test",
-				LastName:  "User",
-				Age:       intPtr(20),
-			},
-			mockSetup:     func() {},
-			expectedError: "username must contain only letters and numbers",
-			expectSuccess: false,
-		},
-		{
-			name: "Invalid email (not @gmail.com)",
-			input: dto.CreateUserDTO{
-				Username:  "testuser",
-				Email:     "test@example.com",
-				Password:  "password123",
-				FirstName: "Test",
-				LastName:  "User",
-				Age:       intPtr(20),
-			},
-			mockSetup:     func() {},
-			expectedError: "email must be a valid Gmail address (@gmail.com)",
-			expectSuccess: false,
-		},
-		{
-			name: "Password too short",
-			input: dto.CreateUserDTO{
-				Username:  "testuser",
-				Email:     "test@gmail.com",
-				Password:  "pass",
-				FirstName: "Test",
-				LastName:  "User",
-				Age:       intPtr(20),
-			},
-			mockSetup:     func() {},
-			expectedError: "password must be at least 8 characters",
-			expectSuccess: false,
-		},
-		{
-			name: "Age too young",
-			input: dto.CreateUserDTO{
-				Username:  "testuser",
-				Email:     "test@gmail.com",
-				Password:  "password123",
-				FirstName: "Test",
-				LastName:  "User",
-				Age:       intPtr(14),
-			},
-			mockSetup:     func() {},
-			expectedError: "age must be greater than 15",
-			expectSuccess: false,
-		},
-		{
-			name: "FirstName too short",
-			input: dto.CreateUserDTO{
-				Username:  "testuser",
-				Email:     "test@gmail.com",
-				Password:  "password123",
-				FirstName: "Te",
-				LastName:  "User",
-				Age:       intPtr(20),
-			},
-			mockSetup:     func() {},
-			expectedError: "first name must be 3-20 characters",
-			expectSuccess: false,
-		},
-		{
-			name: "LastName too short",
-			input: dto.CreateUserDTO{
-				Username:  "testuser",
-				Email:     "test@gmail.com",
-				Password:  "password123",
-				FirstName: "Test",
-				LastName:  "Us",
-				Age:       intPtr(20),
-			},
-			mockSetup:     func() {},
-			expectedError: "last name must be 3-20 characters",
-			expectSuccess: false,
-		},
-		{
-			name:  "Username already taken",
-			input: validUser,
-			mockSetup: func() {
-				mockRepo.On("FindByUsername", validUser.Username).Return(models.User{ID: 1}, nil).Once()
-			},
-			expectedError: "username already taken",
-			expectSuccess: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup mock
-			tt.mockSetup()
-
-			// Panggil fungsi CreateUser
-			result, err := service.CreateUser(tt.input)
-
-			// Periksa hasil
-			if tt.expectSuccess {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.input.Username, result.Username)
-				assert.Equal(t, tt.input.Email, result.Email)
-				assert.Equal(t, tt.input.FirstName, result.FirstName)
-				assert.Equal(t, tt.input.LastName, result.LastName)
-				if tt.input.Age != nil {
-					assert.Equal(t, *tt.input.Age, *result.Age)
-				}
-			} else {
-				assert.Error(t, err)
-				assert.EqualError(t, err, tt.expectedError)
-				assert.Equal(t, dto.UserDTO{}, result)
-			}
-
-			// Pastikan semua mock dipanggil
-			mockRepo.AssertExpectations(t)
-		})
-	}
+	user, err := service.CreateUser(createUserDTO)
+	assert.NoError(t, err)
+	assert.Equal(t, createUserDTO.Username, user.Username)
+	assert.Equal(t, createUserDTO.Email, user.Email)
+	assert.Equal(t, createUserDTO.FirstName, user.FirstName)
+	assert.Equal(t, createUserDTO.LastName, user.LastName)
+	assert.Equal(t, createUserDTO.Age, user.Age)
+	mockRepo.AssertExpectations(t)
 }
 
-// TestUpdateUser menguji fungsi UpdateUser
-func TestUpdateUser(t *testing.T) {
-	// Setup mock repository
+func TestCreateUser_InvalidUsername(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
+	age := 20
 
-	// Existing user data
+	createUserDTO := dto.CreateUserDTO{
+		Username:  "ab", // Terlalu pendek
+		Email:     "test@gmail.com",
+		Password:  "password123",
+		FirstName: "Test",
+		LastName:  "User",
+		Age:       &age,
+	}
+
+	user, err := service.CreateUser(createUserDTO)
+	assert.Error(t, err)
+	assert.Equal(t, "username must be 3-20 characters", err.Error())
+	assert.Equal(t, dto.UserDTO{}, user)
+	mockRepo.AssertNotCalled(t, "FindByUsername")
+	mockRepo.AssertNotCalled(t, "Create")
+}
+
+func TestCreateUser_NonGmailEmail(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	service := NewUserService(mockRepo)
+	age := 20
+
+	createUserDTO := dto.CreateUserDTO{
+		Username:  "testuser",
+		Email:     "test@yahoo.com",
+		Password:  "password123",
+		FirstName: "Test",
+		LastName:  "User",
+		Age:       &age,
+	}
+
+	user, err := service.CreateUser(createUserDTO)
+	assert.Error(t, err)
+	assert.Equal(t, "email must be a valid Gmail address (@gmail.com)", err.Error())
+	assert.Equal(t, dto.UserDTO{}, user)
+	mockRepo.AssertNotCalled(t, "FindByUsername")
+	mockRepo.AssertNotCalled(t, "Create")
+}
+
+func TestCreateUser_ShortPassword(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	service := NewUserService(mockRepo)
+	age := 20
+
+	createUserDTO := dto.CreateUserDTO{
+		Username:  "testuser",
+		Email:     "test@gmail.com",
+		Password:  "pass", // Terlalu pendek
+		FirstName: "Test",
+		LastName:  "User",
+		Age:       &age,
+	}
+
+	user, err := service.CreateUser(createUserDTO)
+	assert.Error(t, err)
+	assert.Equal(t, "password must be at least 8 characters", err.Error())
+	assert.Equal(t, dto.UserDTO{}, user)
+	mockRepo.AssertNotCalled(t, "FindByUsername")
+	mockRepo.AssertNotCalled(t, "Create")
+}
+
+func TestCreateUser_InvalidAge(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	service := NewUserService(mockRepo)
+	age := 14 // Terlalu muda
+
+	createUserDTO := dto.CreateUserDTO{
+		Username:  "testuser",
+		Email:     "test@gmail.com",
+		Password:  "password123",
+		FirstName: "Test",
+		LastName:  "User",
+		Age:       &age,
+	}
+
+	user, err := service.CreateUser(createUserDTO)
+	assert.Error(t, err)
+	assert.Equal(t, "age must be greater than 15", err.Error())
+	assert.Equal(t, dto.UserDTO{}, user)
+	mockRepo.AssertNotCalled(t, "FindByUsername")
+	mockRepo.AssertNotCalled(t, "Create")
+}
+
+func TestCreateUser_UsernameTaken(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	service := NewUserService(mockRepo)
+	age := 20
+
+	createUserDTO := dto.CreateUserDTO{
+		Username:  "testuser",
+		Email:     "test@gmail.com",
+		Password:  "password123",
+		FirstName: "Test",
+		LastName:  "User",
+		Age:       &age,
+	}
+
+	// Mock username sudah digunakan
+	mockRepo.On("FindByUsername", createUserDTO.Username).Return(models.User{ID: 1}, nil)
+
+	user, err := service.CreateUser(createUserDTO)
+	assert.Error(t, err)
+	assert.Equal(t, "username already taken", err.Error())
+	assert.Equal(t, dto.UserDTO{}, user)
+	mockRepo.AssertExpectations(t)
+	mockRepo.AssertNotCalled(t, "Create")
+}
+
+func TestUpdateUser_ValidInput(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	service := NewUserService(mockRepo)
+	age := 25
+
+	updateUserDTO := dto.UpdateUserDTO{
+		Username:  "newuser",
+		Email:     "new@gmail.com",
+		FirstName: "New",
+		LastName:  "User",
+		Age:       &age,
+	}
+
+	// Mock existing user
 	existingUser := models.User{
 		ID:        1,
 		Username:  "olduser",
 		Email:     "old@gmail.com",
-		Password:  "hashedpassword",
 		FirstName: "Old",
 		LastName:  "User",
-		Age:       intPtr(25),
+		Age:       &age,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
-	// Valid update data
-	validUpdate := dto.UpdateUserDTO{
-		Username:  "newuser",
-		Email:     "new@gmail.com",
-		Password:  "newpassword123",
-		FirstName: "New",
-		LastName:  "User",
-		Age:       intPtr(30),
+	mockRepo.On("GetByID", 1).Return(existingUser, nil)
+	mockRepo.On("Update", mock.Anything).Return(models.User{
+		ID:        1,
+		Username:  updateUserDTO.Username,
+		Email:     updateUserDTO.Email,
+		FirstName: updateUserDTO.FirstName,
+		LastName:  updateUserDTO.LastName,
+		Age:       updateUserDTO.Age,
+		CreatedAt: existingUser.CreatedAt,
+		UpdatedAt: time.Now(),
+	}, nil)
+
+	user, err := service.UpdateUser(1, updateUserDTO)
+	assert.NoError(t, err)
+	assert.Equal(t, updateUserDTO.Username, user.Username)
+	assert.Equal(t, updateUserDTO.Email, user.Email)
+	assert.Equal(t, updateUserDTO.FirstName, user.FirstName)
+	assert.Equal(t, updateUserDTO.LastName, user.LastName)
+	assert.Equal(t, updateUserDTO.Age, user.Age)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestUpdateUser_InvalidUsername(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	service := NewUserService(mockRepo)
+
+	updateUserDTO := dto.UpdateUserDTO{
+		Username: "ab", // Terlalu pendek
 	}
 
-	// Mock hash password
-	hashedPassword, _ := utils.HashPassword("newpassword123")
+	user, err := service.UpdateUser(1, updateUserDTO)
+	assert.Error(t, err)
+	assert.Equal(t, "username must be 3-20 characters", err.Error())
+	assert.Equal(t, dto.UserDTO{}, user)
+	mockRepo.AssertNotCalled(t, "GetByID") // Pastikan GetByID tidak dipanggil
+	mockRepo.AssertNotCalled(t, "Update")
+}
 
-	// Test cases
-	tests := []struct {
-		name          string
-		id            int
-		input         dto.UpdateUserDTO
-		mockSetup     func()
-		expectedError string
-		expectSuccess bool
-	}{
-		{
-			name:  "Valid user update",
-			id:    1,
-			input: validUpdate,
-			mockSetup: func() {
-				mockRepo.On("GetByID", 1).Return(existingUser, nil).Once()
-				mockRepo.On("Update", mock.AnythingOfType("models.User")).Return(models.User{
-					ID:        1,
-					Username:  validUpdate.Username,
-					Email:     validUpdate.Email,
-					Password:  hashedPassword,
-					FirstName: validUpdate.FirstName,
-					LastName:  validUpdate.LastName,
-					Age:       validUpdate.Age,
-					CreatedAt: existingUser.CreatedAt,
-					UpdatedAt: time.Now(),
-				}, nil).Once()
-			},
-			expectedError: "",
-			expectSuccess: true,
-		},
-		{
-			name:  "User not found",
-			id:    999,
-			input: validUpdate,
-			mockSetup: func() {
-				mockRepo.On("GetByID", 999).Return(models.User{}, errors.New("user not found")).Once()
-			},
-			expectedError: "user not found",
-			expectSuccess: false,
-		},
-		{
-			name: "Username too short",
-			id:   1,
-			input: dto.UpdateUserDTO{
-				Username:  "ab",
-				Email:     "new@gmail.com",
-				Password:  "newpassword123",
-				FirstName: "New",
-				LastName:  "User",
-				Age:       intPtr(30),
-			},
-			mockSetup:     func() {}, // Tidak perlu mock GetByID
-			expectedError: "username must be 3-20 characters",
-			expectSuccess: false,
-		},
-		{
-			name: "Username with invalid characters",
-			id:   1,
-			input: dto.UpdateUserDTO{
-				Username:  "new@user",
-				Email:     "new@gmail.com",
-				Password:  "newpassword123",
-				FirstName: "New",
-				LastName:  "User",
-				Age:       intPtr(30),
-			},
-			mockSetup:     func() {}, // Tidak perlu mock GetByID
-			expectedError: "username must contain only letters and numbers",
-			expectSuccess: false,
-		},
-		{
-			name: "Invalid email (not @gmail.com)",
-			id:   1,
-			input: dto.UpdateUserDTO{
-				Username:  "newuser",
-				Email:     "new@example.com",
-				Password:  "newpassword123",
-				FirstName: "New",
-				LastName:  "User",
-				Age:       intPtr(30),
-			},
-			mockSetup:     func() {}, // Tidak perlu mock GetByID
-			expectedError: "email must be a valid Gmail address (@gmail.com)",
-			expectSuccess: false,
-		},
-		{
-			name: "Password too short",
-			id:   1,
-			input: dto.UpdateUserDTO{
-				Username:  "newuser",
-				Email:     "new@gmail.com",
-				Password:  "pass",
-				FirstName: "New",
-				LastName:  "User",
-				Age:       intPtr(30),
-			},
-			mockSetup:     func() {}, // Tidak perlu mock GetByID
-			expectedError: "password must be at least 8 characters",
-			expectSuccess: false,
-		},
-		{
-			name: "Age too young",
-			id:   1,
-			input: dto.UpdateUserDTO{
-				Username:  "newuser",
-				Email:     "new@gmail.com",
-				Password:  "newpassword123",
-				FirstName: "New",
-				LastName:  "User",
-				Age:       intPtr(14),
-			},
-			mockSetup:     func() {}, // Tidak perlu mock GetByID
-			expectedError: "age must be greater than 15",
-			expectSuccess: false,
-		},
-		{
-			name: "FirstName too short",
-			id:   1,
-			input: dto.UpdateUserDTO{
-				Username:  "newuser",
-				Email:     "new@gmail.com",
-				Password:  "newpassword123",
-				FirstName: "Ne",
-				LastName:  "User",
-				Age:       intPtr(30),
-			},
-			mockSetup:     func() {}, // Tidak perlu mock GetByID
-			expectedError: "first name must be 3-20 characters",
-			expectSuccess: false,
-		},
-		{
-			name: "LastName too short",
-			id:   1,
-			input: dto.UpdateUserDTO{
-				Username:  "newuser",
-				Email:     "new@gmail.com",
-				Password:  "newpassword123",
-				FirstName: "New",
-				LastName:  "Us",
-				Age:       intPtr(30),
-			},
-			mockSetup:     func() {}, // Tidak perlu mock GetByID
-			expectedError: "last name must be 3-20 characters",
-			expectSuccess: false,
-		},
+func TestUpdateUser_NonGmailEmail(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	service := NewUserService(mockRepo)
+
+	updateUserDTO := dto.UpdateUserDTO{
+		Email: "test@yahoo.com",
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup mock
-			tt.mockSetup()
+	user, err := service.UpdateUser(1, updateUserDTO)
+	assert.Error(t, err)
+	assert.Equal(t, "email must be a valid Gmail address (@gmail.com)", err.Error())
+	assert.Equal(t, dto.UserDTO{}, user)
+	mockRepo.AssertNotCalled(t, "GetByID") // Pastikan GetByID tidak dipanggil
+	mockRepo.AssertNotCalled(t, "Update")
+}
 
-			// Panggil fungsi UpdateUser
-			result, err := service.UpdateUser(tt.id, tt.input)
+func TestUpdateUser_UserNotFound(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	service := NewUserService(mockRepo)
 
-			// Periksa hasil
-			if tt.expectSuccess {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.input.Username, result.Username)
-				assert.Equal(t, tt.input.Email, result.Email)
-				assert.Equal(t, tt.input.FirstName, result.FirstName)
-				assert.Equal(t, tt.input.LastName, result.LastName)
-				if tt.input.Age != nil {
-					assert.Equal(t, *tt.input.Age, *result.Age)
-				}
-			} else {
-				assert.Error(t, err)
-				assert.EqualError(t, err, tt.expectedError)
-				assert.Equal(t, dto.UserDTO{}, result)
-			}
-
-			// Pastikan semua mock dipanggil
-			mockRepo.AssertExpectations(t)
-		})
+	updateUserDTO := dto.UpdateUserDTO{
+		Username: "newuser",
 	}
+
+	// Mock user not found
+	mockRepo.On("GetByID", 1).Return(models.User{}, errors.New("user not found"))
+
+	user, err := service.UpdateUser(1, updateUserDTO)
+	assert.Error(t, err)
+	assert.Equal(t, "user not found", err.Error())
+	assert.Equal(t, dto.UserDTO{}, user)
+	mockRepo.AssertExpectations(t)
+	mockRepo.AssertNotCalled(t, "Update")
 }

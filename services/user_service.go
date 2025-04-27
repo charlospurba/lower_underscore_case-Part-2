@@ -6,7 +6,6 @@ import (
 	"gin-user-app/models"
 	"gin-user-app/repositories"
 	"gin-user-app/utils"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -77,36 +76,46 @@ func (s *UserServiceImpl) GetUserByID(id int) (dto.UserDTO, error) {
 
 // CreateUser membuat pengguna baru
 func (s *UserServiceImpl) CreateUser(user dto.CreateUserDTO) (dto.UserDTO, error) {
-	// Validasi username (3-20 karakter, hanya huruf dan angka)
-	if len(user.Username) < 3 || len(user.Username) > 20 {
+	// Validasi username
+	if len(user.Username) < utils.UsernameMinLength || len(user.Username) > utils.UsernameMaxLength {
 		return dto.UserDTO{}, errors.New("username must be 3-20 characters")
 	}
-	if !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(user.Username) {
+	if !utils.UsernameRegex.MatchString(user.Username) {
 		return dto.UserDTO{}, errors.New("username must contain only letters and numbers")
 	}
 
-	// Validasi email harus @gmail.com
-	if !strings.HasSuffix(user.Email, "@gmail.com") {
+	// Validasi email
+	if utils.EmailRequired && user.Email == "" {
+		return dto.UserDTO{}, errors.New("email is required")
+	}
+	if !utils.EmailRegex.MatchString(user.Email) {
+		return dto.UserDTO{}, errors.New("invalid email format")
+	}
+	if !strings.HasSuffix(user.Email, utils.EmailGmailSuffix) {
 		return dto.UserDTO{}, errors.New("email must be a valid Gmail address (@gmail.com)")
 	}
 
-	// Validasi password (minimal 8 karakter)
-	if len(user.Password) < 8 {
+	// Validasi password
+	if len(user.Password) < utils.PasswordMinLength {
 		return dto.UserDTO{}, errors.New("password must be at least 8 characters")
 	}
 
-	// Validasi first name (3-20 karakter)
-	if len(user.FirstName) < 3 || len(user.FirstName) > 20 {
-		return dto.UserDTO{}, errors.New("first name must be 3-20 characters")
+	// Validasi first name
+	if user.FirstName != "" {
+		if len(user.FirstName) < utils.NameMinLength || len(user.FirstName) > utils.NameMaxLength {
+			return dto.UserDTO{}, errors.New("first name must be 3-20 characters")
+		}
 	}
 
-	// Validasi last name (3-20 karakter)
-	if len(user.LastName) < 3 || len(user.LastName) > 20 {
-		return dto.UserDTO{}, errors.New("last name must be 3-20 characters")
+	// Validasi last name
+	if user.LastName != "" {
+		if len(user.LastName) < utils.NameMinLength || len(user.LastName) > utils.NameMaxLength {
+			return dto.UserDTO{}, errors.New("last name must be 3-20 characters")
+		}
 	}
 
-	// Validasi age (> 15)
-	if user.Age != nil && *user.Age <= 15 {
+	// Validasi age
+	if user.Age != nil && *user.Age <= utils.AgeMin {
 		return dto.UserDTO{}, errors.New("age must be greater than 15")
 	}
 
@@ -153,33 +162,49 @@ func (s *UserServiceImpl) CreateUser(user dto.CreateUserDTO) (dto.UserDTO, error
 
 // UpdateUser memperbarui pengguna
 func (s *UserServiceImpl) UpdateUser(id int, user dto.UpdateUserDTO) (dto.UserDTO, error) {
-	// Validasi semua field di awal
+	// Validasi username
 	if user.Username != "" {
-		if len(user.Username) < 3 || len(user.Username) > 20 {
+		if len(user.Username) < utils.UsernameMinLength || len(user.Username) > utils.UsernameMaxLength {
 			return dto.UserDTO{}, errors.New("username must be 3-20 characters")
 		}
-		if !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(user.Username) {
+		if !utils.UsernameRegex.MatchString(user.Username) {
 			return dto.UserDTO{}, errors.New("username must contain only letters and numbers")
 		}
 	}
 
-	if user.Email != "" && !strings.HasSuffix(user.Email, "@gmail.com") {
-		return dto.UserDTO{}, errors.New("email must be a valid Gmail address (@gmail.com)")
+	// Validasi email
+	if user.Email != "" {
+		if !utils.EmailRegex.MatchString(user.Email) {
+			return dto.UserDTO{}, errors.New("invalid email format")
+		}
+		if !strings.HasSuffix(user.Email, utils.EmailGmailSuffix) {
+			return dto.UserDTO{}, errors.New("email must be a valid Gmail address (@gmail.com)")
+		}
 	}
 
-	if user.Password != "" && len(user.Password) < 8 {
-		return dto.UserDTO{}, errors.New("password must be at least 8 characters")
+	// Validasi password
+	if user.Password != "" {
+		if len(user.Password) < utils.PasswordMinLength {
+			return dto.UserDTO{}, errors.New("password must be at least 8 characters")
+		}
 	}
 
-	if user.FirstName != "" && (len(user.FirstName) < 3 || len(user.FirstName) > 20) {
-		return dto.UserDTO{}, errors.New("first name must be 3-20 characters")
+	// Validasi first name
+	if user.FirstName != "" {
+		if len(user.FirstName) < utils.NameMinLength || len(user.FirstName) > utils.NameMaxLength {
+			return dto.UserDTO{}, errors.New("first name must be 3-20 characters")
+		}
 	}
 
-	if user.LastName != "" && (len(user.LastName) < 3 || len(user.LastName) > 20) {
-		return dto.UserDTO{}, errors.New("last name must be 3-20 characters")
+	// Validasi last name
+	if user.LastName != "" {
+		if len(user.LastName) < utils.NameMinLength || len(user.LastName) > utils.NameMaxLength {
+			return dto.UserDTO{}, errors.New("last name must be 3-20 characters")
+		}
 	}
 
-	if user.Age != nil && *user.Age <= 15 {
+	// Validasi age
+	if user.Age != nil && *user.Age <= utils.AgeMin {
 		return dto.UserDTO{}, errors.New("age must be greater than 15")
 	}
 
@@ -189,7 +214,7 @@ func (s *UserServiceImpl) UpdateUser(id int, user dto.UpdateUserDTO) (dto.UserDT
 		return dto.UserDTO{}, err
 	}
 
-	// Update field yang diisi hanya jika validasi lulus
+	// Update field yang diisi
 	if user.Username != "" {
 		existingUser.Username = user.Username
 	}

@@ -6,14 +6,13 @@ import (
 
 	"gin-user-app/dto"
 	"gin-user-app/services"
+
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 )
 
 // UserHandler menangani request terkait user
 type UserHandler struct {
 	userService services.UserService
-	validate    *validator.Validate
 }
 
 // NewUserHandler membuat instance baru dari UserHandler
@@ -21,10 +20,6 @@ func NewUserHandler(service services.UserService) *UserHandler {
 	return &UserHandler{
 		userService: service,
 	}
-}
-
-func (h *UserHandler) SetValidator(validate *validator.Validate) {
-	h.validate = validate
 }
 
 // GetUsers mendapatkan semua user
@@ -76,50 +71,23 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 
 // CreateUser membuat user baru
 // @Summary Create a new user
-// @Description Register a new user with a Gmail email address
+// @Description Register a new user
 // @Tags Users
 // @Accept  json
 // @Produce  json
 // @Security BearerAuth
-// @Param user body dto.CreateUserDTO true "User data (email must be @gmail.com)"
+// @Param user body dto.CreateUserDTO true "User data"
 // @Success 201 {object} dto.UserDTO
-// @Failure 400 {object} map[string][]string
+// @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /users [post]
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var userReq dto.CreateUserDTO
-
-	// Bind JSON dan tangani jika gagal
 	if err := c.ShouldBindJSON(&userReq); err != nil {
-		// Tangani error validasi
-		if validationErrs, ok := err.(validator.ValidationErrors); ok {
-			var errors []string
-			for _, e := range validationErrs {
-				switch e.Tag() {
-				case "gmail":
-					errors = append(errors, "email must be a valid Gmail address (@gmail.com)")
-				case "email":
-					errors = append(errors, "invalid email format")
-				case "required":
-					errors = append(errors, e.Field()+" is required")
-				case "alphanum":
-					errors = append(errors, e.Field()+" must contain only letters and numbers")
-				case "min":
-					errors = append(errors, e.Field()+" must be at least "+e.Param()+" characters")
-				case "max":
-					errors = append(errors, e.Field()+" must not exceed "+e.Param()+" characters")
-				case "gt":
-					errors = append(errors, e.Field()+" must be greater than "+e.Param())
-				}
-			}
-			c.JSON(http.StatusBadRequest, gin.H{"errors": errors})
-			return
-		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
 	}
 
-	// Panggil service untuk buat user
 	user, err := h.userService.CreateUser(userReq)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -131,15 +99,15 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 
 // UpdateUser memperbarui data user berdasarkan ID
 // @Summary Update a user
-// @Description Update user details with a Gmail email address
+// @Description Update user details
 // @Tags Users
 // @Accept  json
 // @Produce  json
 // @Security BearerAuth
 // @Param id path int true "User ID"
-// @Param user body dto.UpdateUserDTO true "Updated user data (email must be @gmail.com)"
+// @Param user body dto.UpdateUserDTO true "Updated user data"
 // @Success 200 {object} dto.UserDTO
-// @Failure 400 {object} map[string][]string
+// @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Router /users/{id} [put]
 func (h *UserHandler) UpdateUser(c *gin.Context) {
@@ -149,46 +117,19 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Cek apakah user ada sebelum diupdate
-	_, err = h.userService.GetUserByID(id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
-
 	var userReq dto.UpdateUserDTO
 	if err := c.ShouldBindJSON(&userReq); err != nil {
-		// Tangani error validasi
-		if validationErrs, ok := err.(validator.ValidationErrors); ok {
-			var errors []string
-			for _, e := range validationErrs {
-				switch e.Tag() {
-				case "gmail":
-					errors = append(errors, "email must be a valid Gmail address (@gmail.com)")
-				case "email":
-					errors = append(errors, "invalid email format")
-				case "required":
-					errors = append(errors, e.Field()+" is required")
-				case "alphanum":
-					errors = append(errors, e.Field()+" must contain only letters and numbers")
-				case "min":
-					errors = append(errors, e.Field()+" must be at least "+e.Param()+" characters")
-				case "max":
-					errors = append(errors, e.Field()+" must not exceed "+e.Param()+" characters")
-				case "gt":
-					errors = append(errors, e.Field()+" must be greater than "+e.Param())
-				}
-			}
-			c.JSON(http.StatusBadRequest, gin.H{"errors": errors})
-			return
-		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
 	}
 
 	user, err := h.userService.UpdateUser(id, userReq)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+		if err.Error() == "user not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -214,16 +155,9 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	// Cek apakah user ada sebelum dihapus
-	_, err = h.userService.GetUserByID(id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
-
 	err = h.userService.DeleteUser(id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 

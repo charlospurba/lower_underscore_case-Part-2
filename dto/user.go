@@ -1,24 +1,22 @@
 package dto
 
 import (
-	"github.com/go-playground/validator/v10"
-	"strings"
 	"time"
 )
 
 // CreateUserDTO digunakan untuk membuat user baru
 type CreateUserDTO struct {
-	Username  string `json:"username" binding:"required,alphanum,min=3,max=20"`
-	Email     string `json:"email" binding:"required,email,gmail"`
-	Password  string `json:"password" binding:"required,min=8"`
-	FirstName string `json:"firstName" binding:"required,min=3,max=20"`
-	LastName  string `json:"lastName" binding:"required,min=3,max=20"`
-	Age       *int   `json:"age" binding:"required,gt=15"`
+	Username  string `json:"username" binding:"required"`
+	Password  string `json:"password" binding:"required"`
+	Email     string `json:"email" binding:"required"`
+	FirstName string `json:"first_name" binding:"required"`
+	LastName  string `json:"last_name" binding:"required"`
+	Age       *int   `json:"age"`
 }
 
 // UserDTO digunakan untuk respons user
 type UserDTO struct {
-	ID        int       `json:"id"` // Ubah dari uint ke int
+	ID        int       `json:"id"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
 	FirstName string    `json:"firstName"`
@@ -30,18 +28,10 @@ type UserDTO struct {
 
 // UpdateUserDTO digunakan untuk memperbarui user
 type UpdateUserDTO struct {
-	Username  string `json:"username" binding:"omitempty,alphanum,min=3,max=20"`
-	Email     string `json:"email" binding:"omitempty,email,gmail"`
-	Password  string `json:"password" binding:"omitempty,min=8"`
-	FirstName string `json:"firstName" binding:"omitempty,min=3,max=20"`
-	LastName  string `json:"lastName" binding:"omitempty,min=3,max=20"`
-	Age       *int   `json:"age" binding:"omitempty,gt=15"`
-}
-
-// RegisterCustomValidations mendaftarkan validator kustom
-func RegisterCustomValidations(v *validator.Validate) {
-	v.RegisterValidation("gmail", func(fl validator.FieldLevel) bool {
-		email := fl.Field().String()
-		return strings.HasSuffix(email, "@gmail.com")
-	})
+	Username  string `json:"username" binding:"required"`
+	Password  string `json:"password" binding:"required"`
+	Email     string `json:"email" binding:"required"`
+	FirstName string `json:"first_name" binding:"required"`
+	LastName  string `json:"last_name" binding:"required"`
+	Age       *int   `json:"age"`
 }
