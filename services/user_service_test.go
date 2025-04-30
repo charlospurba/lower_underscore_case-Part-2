@@ -46,7 +46,8 @@ func (m *MockUserRepository) Delete(id int) error {
 	return args.Error(0)
 }
 
-func TestCreateUser_ValidInput(t *testing.T) {
+// TestCreateUser_ValidInputUnit tests creating a user with valid input
+func TestCreateUser_ValidInputUnit(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
 	age := 20
@@ -83,13 +84,14 @@ func TestCreateUser_ValidInput(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-func TestCreateUser_InvalidUsername(t *testing.T) {
+// TestCreateUser_InvalidUsernameUnit tests creating a user with an invalid username
+func TestCreateUser_InvalidUsernameUnit(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
 	age := 20
 
 	createUserDTO := dto.CreateUserDTO{
-		Username:  "ab", // Terlalu pendek
+		Username:  "ab", // Too short
 		Email:     "test@gmail.com",
 		Password:  "password123",
 		FirstName: "Test",
@@ -105,7 +107,8 @@ func TestCreateUser_InvalidUsername(t *testing.T) {
 	mockRepo.AssertNotCalled(t, "Create")
 }
 
-func TestCreateUser_NonGmailEmail(t *testing.T) {
+// TestCreateUser_NonGmailEmailUnit tests creating a user with a non-Gmail email
+func TestCreateUser_NonGmailEmailUnit(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
 	age := 20
@@ -127,7 +130,8 @@ func TestCreateUser_NonGmailEmail(t *testing.T) {
 	mockRepo.AssertNotCalled(t, "Create")
 }
 
-func TestCreateUser_ShortPassword(t *testing.T) {
+// TestCreateUser_ShortPasswordUnit tests creating a user with a short password
+func TestCreateUser_ShortPasswordUnit(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
 	age := 20
@@ -135,7 +139,7 @@ func TestCreateUser_ShortPassword(t *testing.T) {
 	createUserDTO := dto.CreateUserDTO{
 		Username:  "testuser",
 		Email:     "test@gmail.com",
-		Password:  "pass", // Terlalu pendek
+		Password:  "pass", // Too short
 		FirstName: "Test",
 		LastName:  "User",
 		Age:       &age,
@@ -149,10 +153,11 @@ func TestCreateUser_ShortPassword(t *testing.T) {
 	mockRepo.AssertNotCalled(t, "Create")
 }
 
-func TestCreateUser_InvalidAge(t *testing.T) {
+// TestCreateUser_InvalidAgeUnit tests creating a user with an invalid age
+func TestCreateUser_InvalidAgeUnit(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
-	age := 14 // Terlalu muda
+	age := 14 // Too young
 
 	createUserDTO := dto.CreateUserDTO{
 		Username:  "testuser",
@@ -171,7 +176,8 @@ func TestCreateUser_InvalidAge(t *testing.T) {
 	mockRepo.AssertNotCalled(t, "Create")
 }
 
-func TestCreateUser_UsernameTaken(t *testing.T) {
+// TestCreateUser_UsernameTakenUnit tests creating a user with a taken username
+func TestCreateUser_UsernameTakenUnit(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
 	age := 20
@@ -185,7 +191,7 @@ func TestCreateUser_UsernameTaken(t *testing.T) {
 		Age:       &age,
 	}
 
-	// Mock username sudah digunakan
+	// Mock username already taken
 	mockRepo.On("FindByUsername", createUserDTO.Username).Return(models.User{ID: 1}, nil)
 
 	user, err := service.CreateUser(createUserDTO)
@@ -196,7 +202,8 @@ func TestCreateUser_UsernameTaken(t *testing.T) {
 	mockRepo.AssertNotCalled(t, "Create")
 }
 
-func TestUpdateUser_ValidInput(t *testing.T) {
+// TestUpdateUser_ValidInputUnit tests updating a user with valid input
+func TestUpdateUser_ValidInputUnit(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
 	age := 25
@@ -243,23 +250,25 @@ func TestUpdateUser_ValidInput(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-func TestUpdateUser_InvalidUsername(t *testing.T) {
+// TestUpdateUser_InvalidUsernameUnit tests updating a user with an invalid username
+func TestUpdateUser_InvalidUsernameUnit(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
 
 	updateUserDTO := dto.UpdateUserDTO{
-		Username: "ab", // Terlalu pendek
+		Username: "ab", // Too short
 	}
 
 	user, err := service.UpdateUser(1, updateUserDTO)
 	assert.Error(t, err)
 	assert.Equal(t, "username must be 3-20 characters", err.Error())
 	assert.Equal(t, dto.UserDTO{}, user)
-	mockRepo.AssertNotCalled(t, "GetByID") // Pastikan GetByID tidak dipanggil
+	mockRepo.AssertNotCalled(t, "GetByID")
 	mockRepo.AssertNotCalled(t, "Update")
 }
 
-func TestUpdateUser_NonGmailEmail(t *testing.T) {
+// TestUpdateUser_NonGmailEmailUnit tests updating a user with a non-Gmail email
+func TestUpdateUser_NonGmailEmailUnit(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
 
@@ -271,11 +280,12 @@ func TestUpdateUser_NonGmailEmail(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "email must be a valid Gmail address (@gmail.com)", err.Error())
 	assert.Equal(t, dto.UserDTO{}, user)
-	mockRepo.AssertNotCalled(t, "GetByID") // Pastikan GetByID tidak dipanggil
+	mockRepo.AssertNotCalled(t, "GetByID")
 	mockRepo.AssertNotCalled(t, "Update")
 }
 
-func TestUpdateUser_UserNotFound(t *testing.T) {
+// TestUpdateUser_UserNotFoundUnit tests updating a non-existent user
+func TestUpdateUser_UserNotFoundUnit(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
 

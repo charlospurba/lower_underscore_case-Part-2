@@ -8,13 +8,23 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
 
 func InitDB() *gorm.DB {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Gagal memuat file .env:", err)
+	paths := []string{".env", "../.env", "../../.env"}
+
+	loaded := false
+	for _, path := range paths {
+		if err := godotenv.Load(path); err == nil {
+			loaded = true
+			break
+		}
+	}
+	if !loaded {
+		log.Println("Peringatan: file .env tidak ditemukan, menggunakan ENV bawaan sistem.")
 	}
 
 	dsn := fmt.Sprintf(
@@ -26,13 +36,20 @@ func InitDB() *gorm.DB {
 		os.Getenv("DB_PORT"),
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// Konfigurasi GORM
+	config := &gorm.Config{}
+	if os.Getenv("TEST_ENV") == "true" {
+		config.Logger = logger.Default.LogMode(logger.Silent)
+	} else {
+		config.Logger = logger.Default.LogMode(logger.Info)
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn), config)
 	if err != nil {
-		log.Fatal("Gagal terhubung ke database:", err)
+		log.Fatalf("Gagal terhubung ke database: %v", err)
 		return nil
 	}
 
 	DB = db
-	fmt.Println("Database berhasil diinisialisasi!")
 	return DB
 }
